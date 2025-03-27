@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">食堂饭卡系统</string>
+
+    <!-- 登录界面 -->
+    <string name="login_title">食堂饭卡管理系统</string>
+    <string name="hint_username">用户名</string>
+    <string name="hint_password">密码</string>
+    <string name="window_type_label">选择窗口类型:</string>
+    <string name="window_type_a">A餐窗口</string>
+    <string name="window_type_b">B餐窗口</string>
+    <string name="btn_login">登录</string>
+    <string name="login_error">登录失败</string>
+
+    <!-- 扫码界面 -->
+    <string name="operator_label">操作员: %s</string>
+    <string name="window_type_display">%s餐窗口</string>
+    <string name="scan_prompt">请扫描学生二维码</string>
+    <string name="scan_waiting">等待扫描...</string>
+    <string name="btn_scan">扫描二维码</string>
+    <string name="btn_logout">退出登录</string>
+
+    <!-- 扫码结果 -->
+    <string name="scan_success">可以领餐</string>
+    <string name="scan_error_collected">已领过餐</string>
+    <string name="scan_error_wrong_window">窗口错误</string>
+    <string name="scan_error_not_selected">未选餐</string>
+    <string name="btn_reset">重置</string>
+    <string name="scan_in_progress">正在处理...</string>
+    <string name="scan_success_message">扫描成功</string>
+</resources>
