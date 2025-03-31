@@ -261,12 +261,21 @@ class ScanActivity : AppCompatActivity() {
                     val role = preferenceManager.getRole() ?: ""
                     // 对于canteen_test角色，只显示餐食类型并提前返回
                     if (role == "canteen_test") {
-                        displayResult(
-                            getString(R.string.meal_type_display, scanData.meal_type),
-                            R.color.success_green
-                        )
-                        showAnimation()
-                        vibrateSuccess()
+                        if (scanData.has_selected) {
+                            displayResult(
+                                getString(R.string.meal_type_display, scanData.meal_type),
+                                R.color.success_green
+                            )
+                            showAnimation()
+                            vibrateSuccess()
+                        } else {
+                            displayResult(
+                                getString(R.string.meal_type_display, getString(R.string.scan_error_not_selected)),
+                                R.color.error_red
+                            )
+                            showAnimation()
+                            vibrateError()
+                        }
                         return@observe  // 提前返回，不执行后续逻辑
                     }
 
@@ -334,20 +343,20 @@ class ScanActivity : AppCompatActivity() {
     private fun vibrateSuccess() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // 成功振动模式: 短-停-短
-            vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 100, 50, 100), -1))
+            vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 100), -1))
         } else {
             @Suppress("DEPRECATION")
-            vibrator.vibrate(longArrayOf(0, 100, 50, 100), -1)
+            vibrator.vibrate(longArrayOf(0, 100), -1)
         }
     }
 
     private fun vibrateError() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // 错误振动模式: 长-停-长
-            vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 250, 100, 250), -1))
+            vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 150, 100, 150), -1))
         } else {
             @Suppress("DEPRECATION")
-            vibrator.vibrate(longArrayOf(0, 250, 100, 250), -1)
+            vibrator.vibrate(longArrayOf(0, 150, 100, 150), -1)
         }
     }
 
