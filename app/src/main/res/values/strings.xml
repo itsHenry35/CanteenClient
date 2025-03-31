@@ -28,4 +28,5 @@
     <string name="btn_reset">重置</string>
     <string name="scan_in_progress">正在处理...</string>
     <string name="scan_success_message">扫描成功</string>
+    <string name="meal_type_display">餐食类型: %1$s</string>
 </resources>

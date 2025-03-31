@@ -258,6 +258,18 @@ class ScanActivity : AppCompatActivity() {
                     // 显示学生姓名
                     binding.textViewStudentName.text = studentName
 
+                    val role = preferenceManager.getRole() ?: ""
+                    // 对于canteen_test角色，只显示餐食类型并提前返回
+                    if (role == "canteen_test") {
+                        displayResult(
+                            getString(R.string.meal_type_display, scanData.meal_type),
+                            R.color.success_green
+                        )
+                        showAnimation()
+                        vibrateSuccess()
+                        return@observe  // 提前返回，不执行后续逻辑
+                    }
+
                     // 根据扫描状态显示结果和触发振动
                     when (result.status) {
                         ScanViewModel.ScanStatus.SUCCESS -> {

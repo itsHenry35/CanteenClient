@@ -65,6 +65,7 @@ class PreferenceManager(context: Context) {
         val role = preferences.getString(KEY_ROLE, "")
         return when (role) {
             "canteen_b" -> "B"
+            "canteen_test" -> "查询"
             else -> "A"
         }
     }
