@@ -6,6 +6,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import com.itshenry.canteenclient.api.RetrofitClient
 import com.itshenry.canteenclient.databinding.ActivityMainBinding
 import com.itshenry.canteenclient.utils.PreferenceManager
 import com.itshenry.canteenclient.viewmodels.LoginViewModel
@@ -25,16 +26,28 @@ class MainActivity : AppCompatActivity() {
 
         preferenceManager = PreferenceManager(this)
 
-        // 尝试刷新token
-        val username = preferenceManager.getUsername()
-        val password = preferenceManager.getPassword()
+        // 加载保存的API端点
+        val savedApiEndpoint = preferenceManager.getApiEndpoint()
+        if (!savedApiEndpoint.isNullOrEmpty()) {
+            binding.editTextApiEndpoint.setText(savedApiEndpoint)
+            RetrofitClient.setBaseUrl(savedApiEndpoint)
 
-        if (username != null && password != null) {
-            // 标记为自动登录
-            isAutoLogin = true
-            // 尝试用保存的用户名密码刷新token
-            showLoading(true)
-            loginViewModel.login(username, password)
+            // 尝试刷新token
+            val username = preferenceManager.getUsername()
+            val password = preferenceManager.getPassword()
+
+            if (username != null && password != null) {
+                // 标记为自动登录
+                isAutoLogin = true
+                // 尝试用保存的用户名密码刷新token
+                showLoading(true)
+                try {
+                    loginViewModel.login(username, password)
+                } catch (e: Exception) {
+                    showLoading(false)
+                    Toast.makeText(this, getString(R.string.login_error) + ": ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
         }
 
         setupListeners()
@@ -45,16 +58,31 @@ class MainActivity : AppCompatActivity() {
         binding.buttonLogin.setOnClickListener {
             val username = binding.editTextUsername.text.toString().trim()
             val password = binding.editTextPassword.text.toString().trim()
+            val apiEndpoint = binding.editTextApiEndpoint.text.toString().trim()
 
-            if (username.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, "请输入用户名和密码", Toast.LENGTH_SHORT).show()
+            if (apiEndpoint.isEmpty()) {
+                Toast.makeText(this, getString(R.string.error_empty_api_endpoint), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // 标记为手动登录
-            isAutoLogin = false
-            showLoading(true)
-            loginViewModel.login(username, password)
+            if (username.isEmpty() || password.isEmpty()) {
+                Toast.makeText(this, getString(R.string.error_empty_credentials), Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            // 保存并设置API端点
+            preferenceManager.saveApiEndpoint(apiEndpoint)
+
+            try {
+                RetrofitClient.setBaseUrl(apiEndpoint)
+
+                // 标记为手动登录
+                isAutoLogin = false
+                showLoading(true)
+                loginViewModel.login(username, password)
+            } catch (e: Exception) {
+                Toast.makeText(this, getString(R.string.login_error) + ": ${e.message}", Toast.LENGTH_LONG).show()
+            }
         }
     }
 
@@ -101,5 +129,6 @@ class MainActivity : AppCompatActivity() {
         binding.buttonLogin.isEnabled = !isLoading
         binding.editTextUsername.isEnabled = !isLoading
         binding.editTextPassword.isEnabled = !isLoading
+        binding.editTextApiEndpoint.isEnabled = !isLoading
     }
 }

@@ -98,7 +98,7 @@ class ScanActivity : AppCompatActivity() {
             try {
                 loginViewModel.login(username, password)
             } catch (e: Exception) {
-                Toast.makeText(this@ScanActivity, "登录信息已过期，请重新登录", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@ScanActivity, getString(R.string.login_error), Toast.LENGTH_LONG).show()
                 preferenceManager.clearAll()
                 navigateToLoginActivity()
             }
@@ -107,7 +107,7 @@ class ScanActivity : AppCompatActivity() {
 
     private fun setupUI() {
         // 显示操作员信息
-        val fullName = preferenceManager.getFullName() ?: "未知用户"
+        val fullName = preferenceManager.getFullName() ?: getString(R.string.unknown_user)
         binding.textViewUserInfo.text = getString(R.string.operator_label, fullName)
 
         // 显示窗口类型
@@ -149,7 +149,7 @@ class ScanActivity : AppCompatActivity() {
                     this, cameraSelector, preview, imageAnalysis)
 
             } catch(exc: Exception) {
-                Toast.makeText(this, "相机启动失败", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.camera_start_failed), Toast.LENGTH_SHORT).show()
             }
 
         }, ContextCompat.getMainExecutor(this))
@@ -199,6 +199,7 @@ class ScanActivity : AppCompatActivity() {
 
         // 显示"正在扫描"状态
         runOnUiThread {
+            binding.textViewScanResult.setTextColor(ContextCompat.getColor(this, R.color.primary_text))
             binding.textViewScanResult.text = getString(R.string.scan_in_progress)
         }
 
@@ -220,14 +221,14 @@ class ScanActivity : AppCompatActivity() {
 
     private fun showLogoutConfirmationDialog() {
         AlertDialog.Builder(this)
-            .setTitle("确认退出")
-            .setMessage("确定要退出登录吗？")
-            .setPositiveButton("确定") { _, _ ->
+            .setTitle(getString(R.string.logout_confirm_title))
+            .setMessage(getString(R.string.logout_confirm_message))
+            .setPositiveButton(getString(R.string.btn_confirm)) { _, _ ->
                 // 清除用户数据并返回登录界面
                 preferenceManager.clearAll()
                 navigateToLoginActivity()
             }
-            .setNegativeButton("取消", null)
+            .setNegativeButton(getString(R.string.btn_cancel), null)
             .show()
     }
 
@@ -241,7 +242,7 @@ class ScanActivity : AppCompatActivity() {
                 }
                 is LoginViewModel.LoginResult.Error -> {
                     // 登录失败，返回登录页面
-                    Toast.makeText(this, "登录已过期，请重新登录", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, getString(R.string.login_expired), Toast.LENGTH_LONG).show()
                     preferenceManager.clearAll()
                     navigateToLoginActivity()
                 }
@@ -361,7 +362,6 @@ class ScanActivity : AppCompatActivity() {
     }
 
     private fun showAnimation() {
-
         // 创建放大缩小动画
         val scaleX = ObjectAnimator.ofFloat(binding.textViewScanResult, "scaleX", 1f, 1.2f, 1f)
         val scaleY = ObjectAnimator.ofFloat(binding.textViewScanResult, "scaleY", 1f, 1.2f, 1f)
@@ -372,7 +372,6 @@ class ScanActivity : AppCompatActivity() {
         animatorSet.duration = 500
         animatorSet.interpolator = AccelerateDecelerateInterpolator()
         animatorSet.start()
-
     }
 
     private fun displayResult(text: String, colorResId: Int) {

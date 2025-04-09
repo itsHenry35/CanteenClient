@@ -14,6 +14,7 @@ class PreferenceManager(context: Context) {
         private const val KEY_PASSWORD = "password"
         private const val KEY_FULL_NAME = "full_name"
         private const val KEY_ROLE = "role"
+        private const val KEY_API_ENDPOINT = "api_endpoint" // API端点键
     }
 
     fun saveToken(token: String) {
@@ -61,6 +62,16 @@ class PreferenceManager(context: Context) {
         return preferences.getString(KEY_ROLE, null)
     }
 
+    // API端点存取
+    fun saveApiEndpoint(endpoint: String) {
+        editor.putString(KEY_API_ENDPOINT, endpoint)
+        editor.apply()
+    }
+
+    fun getApiEndpoint(): String? {
+        return preferences.getString(KEY_API_ENDPOINT, null)
+    }
+
     fun getWindowType(): String {
         val role = preferences.getString(KEY_ROLE, "")
         return when (role) {
@@ -71,7 +82,16 @@ class PreferenceManager(context: Context) {
     }
 
     fun clearAll() {
+        // 获取API端点（保留）
+        val apiEndpoint = getApiEndpoint()
+
+        // 清除所有数据
         editor.clear()
         editor.apply()
+
+        // 如果API端点不为空，则重新保存
+        if (!apiEndpoint.isNullOrEmpty()) {
+            saveApiEndpoint(apiEndpoint)
+        }
     }
 }

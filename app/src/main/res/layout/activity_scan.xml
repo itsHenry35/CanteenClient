@@ -21,14 +21,14 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="操作员: 系统管理员"
+            tools:text="操作员: 系统管理员"
             android:textSize="16sp" />
 
         <TextView
             android:id="@+id/textViewWindowType"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="B餐窗口"
+            tools:text="B餐窗口"
             android:textSize="16sp"
             android:textStyle="bold" />
 
@@ -59,7 +59,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                android:text="请扫描学生二维码"
+                android:text="@string/scan_prompt"
                 android:textSize="24sp"
                 android:textStyle="bold" />
 
@@ -67,7 +67,7 @@
                 android:id="@+id/textViewScanResult"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="等待扫描..."
+                android:text="@string/scan_waiting"
                 android:textSize="48sp"
                 android:textStyle="bold" />
 
@@ -81,7 +81,7 @@
         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="退出登录"
+        android:text="@string/btn_logout"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 

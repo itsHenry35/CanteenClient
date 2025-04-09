@@ -6,8 +6,11 @@
     <string name="login_title">食堂饭卡管理系统</string>
     <string name="hint_username">用户名</string>
     <string name="hint_password">密码</string>
+    <string name="hint_api_endpoint">API端点</string>
     <string name="btn_login">登录</string>
     <string name="login_error">登录失败</string>
+    <string name="error_empty_api_endpoint">请输入API端点</string>
+    <string name="error_empty_credentials">请输入用户名和密码</string>
 
     <!-- 扫码界面 -->
     <string name="operator_label">操作员: %s</string>
@@ -16,6 +19,13 @@
     <string name="scan_waiting">等待扫描…</string>
     <string name="btn_scan">扫描二维码</string>
     <string name="btn_logout">退出登录</string>
+    <string name="unknown_user">未知用户</string>
+    <string name="camera_start_failed">相机启动失败</string>
+    <string name="login_expired">登录已过期，请重新登录</string>
+    <string name="logout_confirm_title">确认退出</string>
+    <string name="logout_confirm_message">确定要退出登录吗？</string>
+    <string name="btn_confirm">确定</string>
+    <string name="btn_cancel">取消</string>
 
     <!-- 扫码结果 -->
     <string name="scan_success">可以领餐</string>
