@@ -63,7 +63,7 @@ dependencies {
     implementation("androidx.camera:camera-view:1.2.0")
 
     // ML Kit 条码扫描
-    implementation("com.google.mlkit:barcode-scanning:17.0.3")
+    implementation("com.google.mlkit:barcode-scanning:17.3.0")
 
     // 测试库
     testImplementation("junit:junit:4.13.2")
