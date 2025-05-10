@@ -60,7 +60,7 @@ dependencies {
     // CameraX
     implementation("androidx.camera:camera-camera2:1.2.0")
     implementation("androidx.camera:camera-lifecycle:1.2.0")
-    implementation("androidx.camera:camera-view:1.2.0")
+    implementation("androidx.camera:camera-view:1.4.2")
 
     // ML Kit 条码扫描
     implementation("com.google.mlkit:barcode-scanning:17.3.0")
