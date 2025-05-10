@@ -1,17 +1,21 @@
 package com.itshenry.canteenclient
 
+import android.Manifest
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -20,6 +24,7 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.mlkit.vision.barcode.BarcodeScanner
@@ -49,6 +54,21 @@ class ScanActivity : AppCompatActivity() {
     private var lastScannedQrData: String = ""
     private var lastScanTime: Long = 0
     private val DEBOUNCE_TIME = 5000 // 5秒内不重复扫描同一个码
+
+    // 摄像头权限请求
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            // 权限授予，启动相机
+            startCamera()
+        } else {
+            // 权限被拒绝，显示在名字区域
+            binding.textViewStudentName.text = "无摄像头权限"
+            // 隐藏相机预览
+            binding.cardViewCamera.visibility = View.GONE
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -88,9 +108,42 @@ class ScanActivity : AppCompatActivity() {
         refreshToken(username, password)
 
         setupUI()
-        startCamera()
+
+        // 检查摄像头权限
+        checkCameraPermission()
+
         setupListeners()
         observeViewModel()
+    }
+
+    // 检查摄像头权限
+    private fun checkCameraPermission() {
+        when {
+            hasCameraPermission() -> {
+                // 有权限，启动相机
+                startCamera()
+            }
+            ActivityCompat.shouldShowRequestPermissionRationale(
+                this,
+                Manifest.permission.CAMERA
+            ) -> {
+                // 显示权限说明，然后请求权限
+                Toast.makeText(this, getString(R.string.camera_permission_required), Toast.LENGTH_LONG).show()
+                requestPermissionLauncher.launch(Manifest.permission.CAMERA)
+            }
+            else -> {
+                // 直接请求权限
+                requestPermissionLauncher.launch(Manifest.permission.CAMERA)
+            }
+        }
+    }
+
+    // 检查是否有摄像头权限
+    private fun hasCameraPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
     }
 
     private fun refreshToken(username: String, password: String) {
@@ -116,6 +169,15 @@ class ScanActivity : AppCompatActivity() {
     }
 
     private fun startCamera() {
+        // 确认有摄像头权限
+        if (!hasCameraPermission()) {
+            binding.textViewStudentName.text = getString(R.string.no_camera_permission)
+            binding.cardViewCamera.visibility = View.GONE
+            return
+        }
+
+        binding.cardViewCamera.visibility = View.VISIBLE
+
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
 
         cameraProviderFuture.addListener({
@@ -150,6 +212,7 @@ class ScanActivity : AppCompatActivity() {
 
             } catch(exc: Exception) {
                 Toast.makeText(this, getString(R.string.camera_start_failed), Toast.LENGTH_SHORT).show()
+                binding.textViewStudentName.text = getString(R.string.camera_start_failed)
             }
 
         }, ContextCompat.getMainExecutor(this))

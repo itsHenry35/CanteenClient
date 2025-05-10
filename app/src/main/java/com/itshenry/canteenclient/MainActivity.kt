@@ -1,11 +1,16 @@
 package com.itshenry.canteenclient
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.itshenry.canteenclient.api.RetrofitClient
 import com.itshenry.canteenclient.databinding.ActivityMainBinding
 import com.itshenry.canteenclient.utils.PreferenceManager
@@ -19,12 +24,28 @@ class MainActivity : AppCompatActivity() {
     // 标记是否是自动登录
     private var isAutoLogin = false
 
+    // 摄像头权限请求
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            // 权限授予，继续登录流程
+            performLogin()
+        } else {
+            // 权限被拒绝，显示提示
+            Toast.makeText(this, getString(R.string.camera_permission_required), Toast.LENGTH_LONG).show()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         preferenceManager = PreferenceManager(this)
+
+        // 请求摄像头权限
+        requestCameraPermission()
 
         // 加载保存的API端点
         val savedApiEndpoint = preferenceManager.getApiEndpoint()
@@ -70,18 +91,75 @@ class MainActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // 保存并设置API端点
-            preferenceManager.saveApiEndpoint(apiEndpoint)
+            // 检查摄像头权限
+            if (hasCameraPermission()) {
+                // 有权限，正常登录
+                // 保存并设置API端点
+                preferenceManager.saveApiEndpoint(apiEndpoint)
 
-            try {
-                RetrofitClient.setBaseUrl(apiEndpoint)
+                try {
+                    RetrofitClient.setBaseUrl(apiEndpoint)
 
-                // 标记为手动登录
-                isAutoLogin = false
-                showLoading(true)
-                loginViewModel.login(username, password)
-            } catch (e: Exception) {
-                Toast.makeText(this, getString(R.string.login_error) + ": ${e.message}", Toast.LENGTH_LONG).show()
+                    // 标记为手动登录
+                    isAutoLogin = false
+                    showLoading(true)
+                    loginViewModel.login(username, password)
+                } catch (e: Exception) {
+                    Toast.makeText(this, getString(R.string.login_error) + ": ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            } else {
+                // 没有权限，请求权限
+                requestPermissionLauncher.launch(Manifest.permission.CAMERA)
+            }
+        }
+    }
+
+    // 执行登录操作
+    private fun performLogin() {
+        val username = binding.editTextUsername.text.toString().trim()
+        val password = binding.editTextPassword.text.toString().trim()
+        val apiEndpoint = binding.editTextApiEndpoint.text.toString().trim()
+
+        // 保存并设置API端点
+        preferenceManager.saveApiEndpoint(apiEndpoint)
+
+        try {
+            RetrofitClient.setBaseUrl(apiEndpoint)
+
+            // 标记为手动登录
+            isAutoLogin = false
+            showLoading(true)
+            loginViewModel.login(username, password)
+        } catch (e: Exception) {
+            Toast.makeText(this, getString(R.string.login_error) + ": ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    // 检查是否有摄像头权限
+    private fun hasCameraPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    // 请求摄像头权限
+    private fun requestCameraPermission() {
+        when {
+            hasCameraPermission() -> {
+                // 已经有权限，无需处理
+            }
+            ActivityCompat.shouldShowRequestPermissionRationale(
+                this,
+                Manifest.permission.CAMERA
+            ) -> {
+                // 显示权限说明，然后请求权限
+                Toast.makeText(this, getString(R.string.camera_permission_required), Toast.LENGTH_LONG).show()
+                requestPermissionLauncher.launch(Manifest.permission.CAMERA)
+            }
+            else -> {
+                // 直接请求权限
+                requestPermissionLauncher.launch(Manifest.permission.CAMERA)
             }
         }
     }

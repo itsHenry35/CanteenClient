@@ -36,4 +36,9 @@
     <string name="scan_in_progress">正在处理…</string>
     <string name="scan_success_message">扫描成功</string>
     <string name="meal_type_display">餐食类型: %1$s</string>
+
+    <!-- 摄像头权限相关 -->
+    <string name="camera_permission_required">请允许摄像头权限</string>
+    <string name="no_camera_permission">无摄像头权限</string>
+    <string name="camera_error">相机启动失败</string>
 </resources>
