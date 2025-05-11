@@ -19,3 +19,10 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# 保留所有模型类及其字段
+-keep class com.itshenry.canteenclient.api.models.** { *; }
+-keepclassmembers class com.itshenry.canteenclient.api.models.** {
+    <fields>;
+    <init>(...);
+}
