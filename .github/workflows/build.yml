@@ -1,0 +1,88 @@
+name: Build Android App
+
+on:
+  # 当推送到主分支时触发
+  push:
+    branches: [ master ]
+  # 当创建pull request时触发
+  pull_request:
+    branches: [ master ]
+  # 允许手动触发
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    # 检出代码
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    # 设置JDK环境
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: 17
+        distribution: 'temurin'
+        cache: gradle
+    
+    # 设置Android SDK
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+    
+    # 确保gradlew有执行权限
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+    
+    # 构建Debug版本
+    - name: Build Debug APK
+      run: ./gradlew assembleDebug
+    
+    # 构建Release版本
+    - name: Build Release APK
+      run: ./gradlew assembleRelease
+    
+    # 构建Debug Bundle
+    - name: Build Debug Bundle
+      run: ./gradlew bundleDebug
+    
+    # 构建Release Bundle
+    - name: Build Release Bundle
+      run: ./gradlew bundleRelease
+    
+    # 上传Debug APK
+    - name: Upload Debug APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-debug
+        path: app/build/outputs/apk/debug/app-debug.apk
+    
+    # 上传Release APK
+    - name: Upload Release APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-release
+        path: app/build/outputs/apk/release/app-release.apk
+    
+    # 上传Debug Bundle
+    - name: Upload Debug Bundle
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-debug-bundle
+        path: app/build/outputs/bundle/debug/app-debug.aab
+    
+    # 上传Release Bundle
+    - name: Upload Release Bundle
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-release-bundle
+        path: app/build/outputs/bundle/release/app-release.aab
+        
+    # 可选：上传混淆映射文件（仅Release版本）
+    - name: Upload Release Mapping File
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: mapping-file
+        path: app/build/outputs/mapping/release/mapping.txt
