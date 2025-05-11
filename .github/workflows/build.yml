@@ -53,35 +53,35 @@ jobs:
     
     # 上传Debug APK
     - name: Upload Debug APK
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: app-debug
         path: app/build/outputs/apk/debug/app-debug.apk
     
     # 上传Release APK
     - name: Upload Release APK
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: app-release
         path: app/build/outputs/apk/release/app-release.apk
     
     # 上传Debug Bundle
     - name: Upload Debug Bundle
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: app-debug-bundle
         path: app/build/outputs/bundle/debug/app-debug.aab
     
     # 上传Release Bundle
     - name: Upload Release Bundle
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: app-release-bundle
         path: app/build/outputs/bundle/release/app-release.aab
         
     # 可选：上传混淆映射文件（仅Release版本）
     - name: Upload Release Mapping File
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: mapping-file
