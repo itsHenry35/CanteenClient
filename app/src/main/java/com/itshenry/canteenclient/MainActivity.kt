@@ -28,10 +28,7 @@ class MainActivity : AppCompatActivity() {
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
-        if (isGranted) {
-            // 权限授予，继续登录流程
-            performLogin()
-        } else {
+        if (!isGranted)  {
             // 权限被拒绝，显示提示
             Toast.makeText(this, getString(R.string.camera_permission_required), Toast.LENGTH_LONG).show()
         }
@@ -111,27 +108,6 @@ class MainActivity : AppCompatActivity() {
                 // 没有权限，请求权限
                 requestPermissionLauncher.launch(Manifest.permission.CAMERA)
             }
-        }
-    }
-
-    // 执行登录操作
-    private fun performLogin() {
-        val username = binding.editTextUsername.text.toString().trim()
-        val password = binding.editTextPassword.text.toString().trim()
-        val apiEndpoint = binding.editTextApiEndpoint.text.toString().trim()
-
-        // 保存并设置API端点
-        preferenceManager.saveApiEndpoint(apiEndpoint)
-
-        try {
-            RetrofitClient.setBaseUrl(apiEndpoint)
-
-            // 标记为手动登录
-            isAutoLogin = false
-            showLoading(true)
-            loginViewModel.login(username, password)
-        } catch (e: Exception) {
-            Toast.makeText(this, getString(R.string.login_error) + ": ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 
