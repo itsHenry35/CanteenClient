@@ -53,8 +53,8 @@ dependencies {
     implementation("androidx.activity:activity-ktx:1.10.1")
 
     // Retrofit 网络请求
-    implementation("com.squareup.retrofit2:retrofit:2.11.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+    implementation("com.squareup.retrofit2:retrofit:2.12.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:5.1.0")
 
     // CameraX
