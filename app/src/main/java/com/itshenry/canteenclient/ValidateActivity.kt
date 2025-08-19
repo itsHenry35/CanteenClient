@@ -72,6 +72,43 @@ class ValidateActivity : AppCompatActivity() {
     private var lastScanTime: Long = 0
     private val DEBOUNCE_TIME = 5000 // 5秒内不重复扫描同一个码
 
+    // 错误/成功提示部分
+    private fun showError(message: String) {
+        displayResult(
+            message,
+            R.color.error_red
+        )
+        showAnimation()
+        vibrateError()
+    }
+    private fun showSuccess(message: String) {
+        displayResult(
+            message,
+            R.color.success_green
+        )
+        showAnimation()
+        vibrateSuccess()
+    }
+    private fun vibrateSuccess() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // 成功振动模式: 短-停-短
+            vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 100), -1))
+        } else {
+            @Suppress("DEPRECATION")
+            vibrator.vibrate(longArrayOf(0, 100), -1)
+        }
+    }
+
+    private fun vibrateError() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // 错误振动模式: 长-停-长
+            vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 150, 100, 150), -1))
+        } else {
+            @Suppress("DEPRECATION")
+            vibrator.vibrate(longArrayOf(0, 150, 100, 150), -1)
+        }
+    }
+
     // 摄像头权限请求
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -236,8 +273,7 @@ class ValidateActivity : AppCompatActivity() {
                 handleNfcData(cardData)
             } else {
                 runOnUiThread {
-                    Toast.makeText(this, getString(R.string.nfc_read_error), Toast.LENGTH_SHORT).show()
-                    resetScanResult()
+                    showError(getString(R.string.nfc_read_error))
                     isProcessingNfc = false
                 }
             }
@@ -476,19 +512,9 @@ class ValidateActivity : AppCompatActivity() {
                     // 对于canteen_test角色，只显示餐食类型并提前返回
                     if (role == "canteen_test") {
                         if (scanData.has_selected) {
-                            displayResult(
-                                getString(R.string.meal_type_display, scanData.meal_type),
-                                R.color.success_green
-                            )
-                            showAnimation()
-                            vibrateSuccess()
+                            showSuccess(getString(R.string.meal_type_display, scanData.meal_type))
                         } else {
-                            displayResult(
-                                getString(R.string.meal_type_display, getString(R.string.scan_error_not_selected)),
-                                R.color.error_red
-                            )
-                            showAnimation()
-                            vibrateError()
+                            showError(getString(R.string.meal_type_display, getString(R.string.scan_error_not_selected)))
                         }
                         if (isNfcMode) {
                             isProcessingNfc = false
@@ -500,13 +526,8 @@ class ValidateActivity : AppCompatActivity() {
                     when (result.status) {
                         ScanViewModel.ScanStatus.SUCCESS -> {
                             // 先检查是否离线模式领过餐
-                            if (NfcHelper.canCollectOffline(currNfcCardData?.qrData)) {
-                                displayResult(
-                                    getString(R.string.scan_error_collected),
-                                    R.color.error_red
-                                )
-                                showAnimation()
-                                vibrateError()
+                            if (!NfcHelper.canCollectOffline(currNfcCardData?.qrData)) {
+                                showError(getString(R.string.scan_error_collected))
                                 if (isNfcMode) {
                                     isProcessingNfc = false
                                 }
@@ -520,53 +541,25 @@ class ValidateActivity : AppCompatActivity() {
                             }
 
                             // 显示成功信息（绿色）并添加视觉效果
-                            displayResult(
-                                getString(R.string.scan_success),
-                                R.color.success_green
-                            )
-
-                            // 添加成功视觉效果和振动反馈
-                            showAnimation()
-                            vibrateSuccess()
+                            showSuccess(getString(R.string.scan_success))
                         }
                         ScanViewModel.ScanStatus.ALREADY_COLLECTED -> {
                             // 显示已领过餐错误（红色）
-                            displayResult(
-                                getString(R.string.scan_error_collected),
-                                R.color.error_red
-                            )
-
-                            // 添加错误视觉效果和振动反馈
-                            showAnimation()
-                            vibrateError()
+                            showError(getString(R.string.scan_error_collected))
                             if (isNfcMode) {
                                 isProcessingNfc = false
                             }
                         }
                         ScanViewModel.ScanStatus.WRONG_WINDOW -> {
                             // 显示窗口错误（红色）
-                            displayResult(
-                                getString(R.string.scan_error_wrong_window),
-                                R.color.error_red
-                            )
-
-                            // 添加错误视觉效果和振动反馈
-                            showAnimation()
-                            vibrateError()
+                            showError(getString(R.string.scan_error_wrong_window))
                             if (isNfcMode) {
                                 isProcessingNfc = false
                             }
                         }
                         ScanViewModel.ScanStatus.NOT_SELECTED -> {
                             // 显示未选餐错误（红色）
-                            displayResult(
-                                getString(R.string.scan_error_not_selected),
-                                R.color.error_red
-                            )
-
-                            // 添加错误视觉效果和振动反馈
-                            showAnimation()
-                            vibrateError()
+                            showError(getString(R.string.scan_error_not_selected))
                             if (isNfcMode) {
                                 isProcessingNfc = false
                             }
@@ -591,26 +584,6 @@ class ValidateActivity : AppCompatActivity() {
                     }
                 }
             }
-        }
-    }
-
-    private fun vibrateSuccess() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // 成功振动模式: 短-停-短
-            vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 100), -1))
-        } else {
-            @Suppress("DEPRECATION")
-            vibrator.vibrate(longArrayOf(0, 100), -1)
-        }
-    }
-
-    private fun vibrateError() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // 错误振动模式: 长-停-长
-            vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 150, 100, 150), -1))
-        } else {
-            @Suppress("DEPRECATION")
-            vibrator.vibrate(longArrayOf(0, 150, 100, 150), -1)
         }
     }
 
@@ -669,7 +642,8 @@ class ValidateActivity : AppCompatActivity() {
 
                 if (success) {
                     runOnUiThread {
-                        Toast.makeText(this, "卡片更新成功", Toast.LENGTH_SHORT).show()
+                        // 成功不必显示
+                        // Toast.makeText(this, "卡片更新成功", Toast.LENGTH_SHORT).show()
                     }
                 } else {
                     runOnUiThread {
@@ -688,17 +662,12 @@ class ValidateActivity : AppCompatActivity() {
         val tag = currentNfcTag
         if (tag != null && currNfcCardData != null) {
             // 显示网络错误Toast
-            Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
+            if (!isOfflineMode) Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
 
             // 基于卡片中的日期进行离线验证
             if (NfcHelper.canCollectOffline(currNfcCardData!!.lastCollectedDate)) {
                 // 可以领餐
-                displayResult(
-                    getString(R.string.scan_success),
-                    R.color.success_green
-                )
-                showAnimation()
-                vibrateSuccess()
+                showSuccess(getString(R.string.scan_success))
 
                 // 更新卡片日期
                 val success = NfcHelper.writeToTag(
@@ -712,12 +681,7 @@ class ValidateActivity : AppCompatActivity() {
                 }
             } else {
                 // 今日已领餐
-                displayResult(
-                    getString(R.string.scan_error_collected),
-                    R.color.error_red
-                )
-                showAnimation()
-                vibrateError()
+                showError(getString(R.string.scan_error_collected))
             }
         }
 
