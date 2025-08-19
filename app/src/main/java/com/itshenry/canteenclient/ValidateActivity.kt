@@ -168,9 +168,8 @@ class ValidateActivity : AppCompatActivity() {
             navigateToLoginActivity()
             return
         }
-
         // 尝试刷新token
-        refreshToken(username, password)
+        if (!isOfflineMode) refreshToken(username, password)
 
         setupUI()
 
@@ -666,19 +665,15 @@ class ValidateActivity : AppCompatActivity() {
 
             // 基于卡片中的日期进行离线验证
             if (NfcHelper.canCollectOffline(currNfcCardData!!.lastCollectedDate)) {
-                // 可以领餐
-                showSuccess(getString(R.string.scan_success))
-
                 // 更新卡片日期
                 val success = NfcHelper.writeToTag(
                     tag,
                     currNfcCardData!!.qrData,
                     NfcHelper.getTodayDateString()
                 )
-
-                if (!success) {
-                    Toast.makeText(this, getString(R.string.nfc_write_error), Toast.LENGTH_SHORT).show()
-                }
+                // 若写失败，拒绝领餐
+                if (!success) showError(getString(R.string.nfc_write_error))
+                else showSuccess(getString(R.string.scan_success))
             } else {
                 // 今日已领餐
                 showError(getString(R.string.scan_error_collected))

@@ -54,5 +54,5 @@
     <string name="nfc_not_supported">设备不支持NFC</string>
     <string name="nfc_disabled">请先开启NFC功能</string>
     <string name="nfc_read_error">读取卡片失败，请重放</string>
-    <string name="nfc_write_error">写入卡片失败</string>
+    <string name="nfc_write_error">写入卡片失败，请重放</string>
 </resources>
