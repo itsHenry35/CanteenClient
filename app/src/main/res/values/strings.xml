@@ -7,6 +7,9 @@
     <string name="hint_username">用户名</string>
     <string name="hint_password">密码</string>
     <string name="hint_api_endpoint">API端点</string>
+    <string name="scan_mode_label">扫码模式</string>
+    <string name="qr_code_mode">二维码</string>
+    <string name="nfc_mode">NFC卡</string>
     <string name="btn_login">登录</string>
     <string name="login_error">登录失败</string>
     <string name="error_empty_api_endpoint">请输入API端点</string>
@@ -16,7 +19,10 @@
     <string name="operator_label">操作员: %s</string>
     <string name="window_type_display">%s餐窗口</string>
     <string name="scan_prompt">请扫描学生二维码</string>
+    <string name="nfc_prompt">请刷学生饭卡</string>
     <string name="scan_waiting">等待扫描…</string>
+    <string name="nfc_waiting">等待刷卡…</string>
+    <string name="nfc_keep_card">请不要移开卡片</string>
     <string name="btn_scan">扫描二维码</string>
     <string name="btn_logout">退出登录</string>
     <string name="unknown_user">未知用户</string>
@@ -26,6 +32,7 @@
     <string name="logout_confirm_message">确定要退出登录吗？</string>
     <string name="btn_confirm">确定</string>
     <string name="btn_cancel">取消</string>
+    <string name="offline_mode">离线模式</string>
 
     <!-- 扫码结果 -->
     <string name="scan_success">可以领餐</string>
@@ -34,6 +41,7 @@
     <string name="scan_error_not_selected">未选餐</string>
     <string name="btn_reset">重置</string>
     <string name="scan_in_progress">正在处理…</string>
+    <string name="nfc_updating">正在更新卡片…</string>
     <string name="scan_success_message">扫描成功</string>
     <string name="meal_type_display">餐食类型: %1$s</string>
 
@@ -41,4 +49,10 @@
     <string name="camera_permission_required">请允许摄像头权限</string>
     <string name="no_camera_permission">无摄像头权限</string>
     <string name="camera_error">相机启动失败</string>
+
+    <!-- NFC相关 -->
+    <string name="nfc_not_supported">设备不支持NFC</string>
+    <string name="nfc_disabled">请先开启NFC功能</string>
+    <string name="nfc_read_error">读取卡片失败</string>
+    <string name="nfc_write_error">写入卡片失败</string>
 </resources>

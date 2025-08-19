@@ -3,6 +3,7 @@ package com.itshenry.canteenclient
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.nfc.NfcAdapter
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
@@ -23,6 +24,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var preferenceManager: PreferenceManager
     // 标记是否是自动登录
     private var isAutoLogin = false
+    private var nfcAdapter: NfcAdapter? = null
+    private var isOfflineMode = false // 添加离线模式标记
 
     // 摄像头权限请求
     private val requestPermissionLauncher = registerForActivityResult(
@@ -41,14 +44,25 @@ class MainActivity : AppCompatActivity() {
 
         preferenceManager = PreferenceManager(this)
 
+        // 初始化NFC
+        nfcAdapter = NfcAdapter.getDefaultAdapter(this)
+        checkNfcSupport()
+
         // 请求摄像头权限
         requestCameraPermission()
 
-        // 加载保存的API端点
+        // 加载保存的API端点和扫码模式
         val savedApiEndpoint = preferenceManager.getApiEndpoint()
         if (!savedApiEndpoint.isNullOrEmpty()) {
             binding.editTextApiEndpoint.setText(savedApiEndpoint)
             RetrofitClient.setBaseUrl(savedApiEndpoint)
+
+            // 加载保存的扫码模式
+            if (preferenceManager.isNfcMode()) {
+                binding.radioNfc.isChecked = true
+            } else {
+                binding.radioQrCode.isChecked = true
+            }
 
             // 尝试刷新token
             val username = preferenceManager.getUsername()
@@ -72,11 +86,22 @@ class MainActivity : AppCompatActivity() {
         observeViewModel()
     }
 
+    private fun checkNfcSupport() {
+        if (nfcAdapter == null) {
+            // 设备不支持NFC，隐藏NFC选项
+            binding.radioNfc.visibility = View.GONE
+        } else {
+            // 设备支持NFC，显示选项
+            binding.radioNfc.visibility = View.VISIBLE
+        }
+    }
+
     private fun setupListeners() {
         binding.buttonLogin.setOnClickListener {
             val username = binding.editTextUsername.text.toString().trim()
             val password = binding.editTextPassword.text.toString().trim()
             val apiEndpoint = binding.editTextApiEndpoint.text.toString().trim()
+            val isNfcMode = binding.radioNfc.isChecked
 
             if (apiEndpoint.isEmpty()) {
                 Toast.makeText(this, getString(R.string.error_empty_api_endpoint), Toast.LENGTH_SHORT).show()
@@ -88,25 +113,36 @@ class MainActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // 检查摄像头权限
-            if (hasCameraPermission()) {
-                // 有权限，正常登录
-                // 保存并设置API端点
-                preferenceManager.saveApiEndpoint(apiEndpoint)
-
-                try {
-                    RetrofitClient.setBaseUrl(apiEndpoint)
-
-                    // 标记为手动登录
-                    isAutoLogin = false
-                    showLoading(true)
-                    loginViewModel.login(username, password)
-                } catch (e: Exception) {
-                    Toast.makeText(this, getString(R.string.login_error) + ": ${e.message}", Toast.LENGTH_LONG).show()
+            // 如果选择NFC模式，检查NFC状态
+            if (isNfcMode) {
+                if (nfcAdapter == null) {
+                    Toast.makeText(this, getString(R.string.nfc_not_supported), Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                if (!nfcAdapter!!.isEnabled) {
+                    Toast.makeText(this, getString(R.string.nfc_disabled), Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
                 }
             } else {
-                // 没有权限，请求权限
-                requestPermissionLauncher.launch(Manifest.permission.CAMERA)
+                // 二维码模式需要检查摄像头权限
+                if (!hasCameraPermission()) {
+                    requestPermissionLauncher.launch(Manifest.permission.CAMERA)
+                    return@setOnClickListener
+                }
+            }
+
+            // 保存并设置API端点
+            preferenceManager.saveApiEndpoint(apiEndpoint)
+
+            try {
+                RetrofitClient.setBaseUrl(apiEndpoint)
+
+                // 标记为手动登录
+                isAutoLogin = false
+                showLoading(true)
+                loginViewModel.login(username, password)
+            } catch (e: Exception) {
+                Toast.makeText(this, getString(R.string.login_error) + ": ${e.message}", Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -154,18 +190,37 @@ class MainActivity : AppCompatActivity() {
                     preferenceManager.saveFullName(data.user.full_name)
                     preferenceManager.saveRole(data.user.role)
 
-                    // 如果是手动登录，才保存密码
+                    // 如果是手动登录，才保存密码和扫码模式
                     if (!isAutoLogin) {
                         val password = binding.editTextPassword.text.toString().trim()
                         if (password.isNotEmpty()) {
                             preferenceManager.savePassword(password)
                         }
+                        // 保存扫码模式
+                        preferenceManager.saveScanMode(binding.radioNfc.isChecked)
                     }
+
+                    // 重置离线模式
+                    isOfflineMode = false
 
                     // 导航到扫码界面
                     navigateToScanActivity()
                 }
                 is LoginViewModel.LoginResult.Error -> {
+                    // 如果是自动登录且选择了NFC模式，检查是否为网络错误
+                    if (isAutoLogin && preferenceManager.isNfcMode()) {
+                        // 检查是否为网络错误（非账号密码错误）且是否不是测试角色
+                        if (isNetworkError(result.message) && !preferenceManager.getRole().equals("canteen_test", ignoreCase = true)) {
+                            // 设置离线模式
+                            isOfflineMode = true
+                            Toast.makeText(this, "网络连接失败，切换到离线模式", Toast.LENGTH_LONG).show()
+
+                            // 强行继续到扫码界面
+                            navigateToScanActivity()
+                            return@observe
+                        }
+                    }
+
                     Toast.makeText(this, result.message, Toast.LENGTH_LONG).show()
                 }
             }
@@ -173,7 +228,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun navigateToScanActivity() {
-        val intent = Intent(this, ScanActivity::class.java)
+        val intent = Intent(this, ValidateActivity::class.java)
+        intent.putExtra("isOfflineMode", isOfflineMode)
         startActivity(intent)
         finish()
     }
@@ -184,5 +240,16 @@ class MainActivity : AppCompatActivity() {
         binding.editTextUsername.isEnabled = !isLoading
         binding.editTextPassword.isEnabled = !isLoading
         binding.editTextApiEndpoint.isEnabled = !isLoading
+    }
+
+    // 判断是否为网络错误
+    private fun isNetworkError(errorMessage: String): Boolean {
+        val networkErrorKeywords = listOf(
+            "网络", "连接", "timeout", "connect", "network", "failed", "失败",
+            "Unable to resolve host", "ConnectException", "SocketTimeoutException"
+        )
+        return networkErrorKeywords.any { keyword ->
+            errorMessage.contains(keyword, ignoreCase = true)
+        }
     }
 }

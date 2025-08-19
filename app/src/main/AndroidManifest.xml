@@ -6,9 +6,12 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.NFC" />
 
     <uses-feature android:name="android.hardware.camera"/>
     <uses-feature android:name="android.hardware.camera.autofocus"
+        android:required="false" />
+    <uses-feature android:name="android.hardware.nfc"
         android:required="false" />
 
     <application
@@ -30,7 +33,7 @@
         </activity>
 
         <activity
-            android:name=".ScanActivity"
+            android:name=".ValidateActivity"
             android:exported="false"
             android:screenOrientation="landscape" />
 

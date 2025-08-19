@@ -15,6 +15,7 @@ class PreferenceManager(context: Context) {
         private const val KEY_FULL_NAME = "full_name"
         private const val KEY_ROLE = "role"
         private const val KEY_API_ENDPOINT = "api_endpoint" // API端点键
+        private const val KEY_SCAN_MODE = "scan_mode" // 扫码模式键，true为NFC，false为二维码
     }
 
     fun saveToken(token: String) {
@@ -70,6 +71,16 @@ class PreferenceManager(context: Context) {
 
     fun getApiEndpoint(): String? {
         return preferences.getString(KEY_API_ENDPOINT, null)
+    }
+
+    // 扫码模式存取
+    fun saveScanMode(isNfcMode: Boolean) {
+        editor.putBoolean(KEY_SCAN_MODE, isNfcMode)
+        editor.apply()
+    }
+
+    fun isNfcMode(): Boolean {
+        return preferences.getBoolean(KEY_SCAN_MODE, false) // 默认为二维码模式
     }
 
     fun getWindowType(): String {
