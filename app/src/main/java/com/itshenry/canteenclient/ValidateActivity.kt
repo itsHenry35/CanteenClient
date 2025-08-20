@@ -277,6 +277,7 @@ class ValidateActivity : AppCompatActivity() {
                         handleNfcIntent(intent)
                     },
                     NfcAdapter.FLAG_READER_NFC_A or
+                            NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK or // 跳过NDEF检查
                             NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS, // 禁用系统声音
                     options
                 )
@@ -704,7 +705,6 @@ class ValidateActivity : AppCompatActivity() {
         if (tag != null && currNfcCardData != null) {
             success = NfcHelper.writeToTag(
                 tag,
-                currNfcCardData!!.qrData,
                 NfcHelper.getTodayDateString()
             )
         }
