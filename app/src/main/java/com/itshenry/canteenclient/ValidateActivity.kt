@@ -236,14 +236,42 @@ class ValidateActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         if (isNfcMode && nfcAdapter != null) {
+            val options = Bundle()
+            // 禁用NFC读取时的系统声音
+            options.putInt(NfcAdapter.EXTRA_READER_PRESENCE_CHECK_DELAY, 250)
+
             nfcAdapter?.enableForegroundDispatch(this, pendingIntent, intentFilters, techLists)
+
+            // 禁用系统的NFC声音和振动
+            try {
+                nfcAdapter?.enableReaderMode(
+                    this,
+                    { tag ->
+                        // 处理NFC标签
+                        val intent = Intent().apply {
+                            putExtra(NfcAdapter.EXTRA_TAG, tag)
+                        }
+                        handleNfcIntent(intent)
+                    },
+                    NfcAdapter.FLAG_READER_NFC_A or
+                            NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS, // 禁用系统声音
+                    options
+                )
+            } catch (e: Exception) {
+                // 如果enableReaderMode失败，回退到原来的方法
+                nfcAdapter?.enableForegroundDispatch(this, pendingIntent, intentFilters, techLists)
+            }
         }
     }
 
     override fun onPause() {
         super.onPause()
         if (isNfcMode && nfcAdapter != null) {
-            nfcAdapter?.disableForegroundDispatch(this)
+            try {
+                nfcAdapter?.disableReaderMode(this)
+            } catch (e: Exception) {
+                nfcAdapter?.disableForegroundDispatch(this)
+            }
         }
     }
 
@@ -525,7 +553,7 @@ class ValidateActivity : AppCompatActivity() {
                     when (result.status) {
                         ScanViewModel.ScanStatus.SUCCESS -> {
                             // 先检查是否离线模式领过餐
-                            if (!NfcHelper.canCollectOffline(currNfcCardData?.qrData)) {
+                            if (!NfcHelper.canCollectOffline(currNfcCardData?.lastCollectedDate)) {
                                 showError(getString(R.string.scan_error_collected))
                                 if (isNfcMode) {
                                     isProcessingNfc = false
