@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="24dp"
-    tools:context=".ScanActivity">
+    tools:context=".ValidateActivity">
 
     <LinearLayout
         android:id="@+id/linearLayoutHeader"
@@ -30,6 +30,7 @@
             android:layout_height="wrap_content"
             tools:text="B餐窗口"
             android:textSize="16sp"
+            android:textColor="@color/primary_text"
             android:textStyle="bold" />
 
     </LinearLayout>

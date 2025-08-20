@@ -38,6 +38,7 @@ import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import com.itshenry.canteenclient.databinding.ActivityScanBinding
+import com.itshenry.canteenclient.utils.NetworkHelper
 import com.itshenry.canteenclient.utils.NfcHelper
 import com.itshenry.canteenclient.utils.PreferenceManager
 import com.itshenry.canteenclient.viewmodels.LoginViewModel
@@ -89,6 +90,21 @@ class ValidateActivity : AppCompatActivity() {
         showAnimation()
         vibrateSuccess()
     }
+
+    private fun showWarning(message: String) {
+        displayResult(
+            message,
+            R.color.warning_amber
+        )
+    }
+
+    private fun showInfo(message: String) {
+        displayResult(
+            message,
+            R.color.secondary_text
+        )
+    }
+
     private fun vibrateSuccess() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // 成功振动模式: 短-停-短
@@ -120,7 +136,7 @@ class ValidateActivity : AppCompatActivity() {
             }
         } else {
             // 权限被拒绝，显示在名字区域
-            binding.textViewStudentName.text = "无摄像头权限"
+            showWarning(getString(R.string.no_camera_permission))
             // 隐藏相机预览
             binding.cardViewCamera.visibility = View.GONE
         }
@@ -219,18 +235,13 @@ class ValidateActivity : AppCompatActivity() {
             binding.textViewWindowType.setTextColor(ContextCompat.getColor(this, R.color.error_red))
         } else {
             binding.textViewWindowType.text = getString(R.string.window_type_display, windowType)
-            binding.textViewWindowType.setTextColor(ContextCompat.getColor(this, R.color.primary_text))
         }
 
         // 根据扫码模式设置UI
         if (isNfcMode) {
-            binding.textViewStudentName.text = getString(R.string.nfc_prompt)
-            binding.textViewScanResult.text = getString(R.string.nfc_waiting)
             binding.cardViewCamera.visibility = View.GONE
-        } else {
-            binding.textViewStudentName.text = getString(R.string.scan_prompt)
-            binding.textViewScanResult.text = getString(R.string.scan_waiting)
         }
+        resetScanResult()
     }
 
     override fun onResume() {
@@ -290,8 +301,7 @@ class ValidateActivity : AppCompatActivity() {
 
             // 显示"请不要移开卡片"
             runOnUiThread {
-                binding.textViewScanResult.text = getString(R.string.nfc_keep_card)
-                binding.textViewScanResult.setTextColor(ContextCompat.getColor(this, R.color.primary_text))
+                showWarning(getString(R.string.nfc_keep_card))
             }
 
             // 读取NFC数据
@@ -317,8 +327,7 @@ class ValidateActivity : AppCompatActivity() {
 
         // 显示"正在处理"状态
         runOnUiThread {
-            binding.textViewScanResult.setTextColor(ContextCompat.getColor(this, R.color.primary_text))
-            binding.textViewScanResult.text = getString(R.string.scan_in_progress)
+            showInfo(getString(R.string.scan_in_progress))
         }
 
         // 如果是离线模式，直接进行离线验证
@@ -380,7 +389,7 @@ class ValidateActivity : AppCompatActivity() {
     private fun startCamera() {
         // 确认有摄像头权限
         if (!hasCameraPermission()) {
-            binding.textViewStudentName.text = getString(R.string.no_camera_permission)
+            showWarning(getString(R.string.no_camera_permission))
             binding.cardViewCamera.visibility = View.GONE
             return
         }
@@ -420,8 +429,7 @@ class ValidateActivity : AppCompatActivity() {
                     this, cameraSelector, preview, imageAnalysis)
 
             } catch(exc: Exception) {
-                Toast.makeText(this, getString(R.string.camera_start_failed), Toast.LENGTH_SHORT).show()
-                binding.textViewStudentName.text = getString(R.string.camera_start_failed)
+                showWarning(getString(R.string.camera_error))
             }
 
         }, ContextCompat.getMainExecutor(this))
@@ -471,8 +479,7 @@ class ValidateActivity : AppCompatActivity() {
 
         // 显示"正在扫描"状态
         runOnUiThread {
-            binding.textViewScanResult.setTextColor(ContextCompat.getColor(this, R.color.primary_text))
-            binding.textViewScanResult.text = getString(R.string.scan_in_progress)
+            showInfo(getString(R.string.scan_in_progress))
         }
 
         // 处理扫码数据，传入当前窗口类型
@@ -562,7 +569,13 @@ class ValidateActivity : AppCompatActivity() {
                             }
                             // 如果是NFC模式，更新卡片数据
                             if (isNfcMode && currentNfcTag != null) {
-                                updateNfcCard()
+                                val success = updateNfcCard()
+                                if (!success) {
+                                    // 在线模式没写入问题不大
+                                    runOnUiThread {
+                                        Toast.makeText(this, getString(R.string.nfc_write_error), Toast.LENGTH_SHORT).show()
+                                    }
+                                }
                             } else if (isNfcMode) {
                                 isProcessingNfc = false
                             }
@@ -595,16 +608,11 @@ class ValidateActivity : AppCompatActivity() {
                 }
                 is ScanViewModel.ScanResult.Error -> {
                     // 网络错误，如果是NFC模式，尝试离线验证
-                    if (isNfcMode && currentNfcTag != null) {
+                    if (isNfcMode && currentNfcTag != null && NetworkHelper.isNetworkError(result.message)) {
                         handleNfcOfflineMode(result.message)
                     } else {
-                        // 显示错误信息
-                        Toast.makeText(this, result.message, Toast.LENGTH_LONG).show()
-                        resetScanResult()
-
-                        // 添加错误视觉效果和振动反馈
-                        showAnimation()
-                        vibrateError()
+                        // 显示错误信
+                        showError(result.message)
                         if (isNfcMode) {
                             isProcessingNfc = false
                         }
@@ -640,7 +648,7 @@ class ValidateActivity : AppCompatActivity() {
             binding.textViewStudentName.text = getString(R.string.scan_prompt)
             binding.textViewScanResult.text = getString(R.string.scan_waiting)
         }
-        binding.textViewScanResult.setTextColor(ContextCompat.getColor(this, R.color.primary_text))
+        binding.textViewScanResult.setTextColor(ContextCompat.getColor(this, R.color.secondary_text))
 
         // 重置防抖变量
         lastScannedQrData = ""
@@ -652,36 +660,24 @@ class ValidateActivity : AppCompatActivity() {
         finish()
     }
 
-    private fun updateNfcCard() {
+    private fun updateNfcCard(): Boolean {
         runOnUiThread {
-            binding.textViewScanResult.text = getString(R.string.nfc_updating)
+            showWarning(getString(R.string.nfc_keep_card))
         }
+        var success = false
 
         val tag = currentNfcTag
-        if (tag != null) {
-            val cardData = NfcHelper.readFromTag(tag)
-            if (cardData != null) {
-                val success = NfcHelper.writeToTag(
-                    tag,
-                    cardData.qrData,
-                    NfcHelper.getTodayDateString()
-                )
-
-                if (success) {
-                    runOnUiThread {
-                        // 成功不必显示
-                        // Toast.makeText(this, "卡片更新成功", Toast.LENGTH_SHORT).show()
-                    }
-                } else {
-                    runOnUiThread {
-                        Toast.makeText(this, getString(R.string.nfc_write_error), Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
+        if (tag != null && currNfcCardData != null) {
+            success = NfcHelper.writeToTag(
+                tag,
+                currNfcCardData!!.qrData,
+                NfcHelper.getTodayDateString()
+            )
         }
 
         isProcessingNfc = false
         currentNfcTag = null
+        return success
     }
 
 
@@ -694,11 +690,7 @@ class ValidateActivity : AppCompatActivity() {
             // 基于卡片中的日期进行离线验证
             if (NfcHelper.canCollectOffline(currNfcCardData!!.lastCollectedDate)) {
                 // 更新卡片日期
-                val success = NfcHelper.writeToTag(
-                    tag,
-                    currNfcCardData!!.qrData,
-                    NfcHelper.getTodayDateString()
-                )
+                val success = updateNfcCard()
                 // 若写失败，拒绝领餐
                 if (!success) showError(getString(R.string.nfc_write_error))
                 else showSuccess(getString(R.string.scan_success))

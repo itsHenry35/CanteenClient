@@ -14,6 +14,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.itshenry.canteenclient.api.RetrofitClient
 import com.itshenry.canteenclient.databinding.ActivityMainBinding
+import com.itshenry.canteenclient.utils.NetworkHelper
 import com.itshenry.canteenclient.utils.PreferenceManager
 import com.itshenry.canteenclient.viewmodels.LoginViewModel
 
@@ -210,7 +211,7 @@ class MainActivity : AppCompatActivity() {
                     // 如果是自动登录且选择了NFC模式，检查是否为网络错误
                     if (isAutoLogin && preferenceManager.isNfcMode()) {
                         // 检查是否为网络错误（非账号密码错误）且是否不是测试角色
-                        if (isNetworkError(result.message) && !preferenceManager.getRole().equals("canteen_test", ignoreCase = true)) {
+                        if (NetworkHelper.isNetworkError(result.message) && !preferenceManager.getRole().equals("canteen_test", ignoreCase = true)) {
                             // 设置离线模式
                             isOfflineMode = true
                             Toast.makeText(this, "网络连接失败，切换到离线模式", Toast.LENGTH_LONG).show()
@@ -240,16 +241,5 @@ class MainActivity : AppCompatActivity() {
         binding.editTextUsername.isEnabled = !isLoading
         binding.editTextPassword.isEnabled = !isLoading
         binding.editTextApiEndpoint.isEnabled = !isLoading
-    }
-
-    // 判断是否为网络错误
-    private fun isNetworkError(errorMessage: String): Boolean {
-        val networkErrorKeywords = listOf(
-            "网络", "连接", "timeout", "connect", "network", "failed", "失败",
-            "Unable to resolve host", "ConnectException", "SocketTimeoutException"
-        )
-        return networkErrorKeywords.any { keyword ->
-            errorMessage.contains(keyword, ignoreCase = true)
-        }
     }
 }
