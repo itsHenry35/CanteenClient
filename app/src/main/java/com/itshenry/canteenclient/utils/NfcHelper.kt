@@ -4,9 +4,12 @@ import android.nfc.NdefMessage
 import android.nfc.NdefRecord
 import android.nfc.Tag
 import android.nfc.tech.Ndef
+import android.util.Base64
 import java.io.IOException
+import java.security.MessageDigest
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 class NfcHelper {
 
@@ -63,12 +66,19 @@ class NfcHelper {
                         // MIME类型记录，直接读取payload
                         String(record.payload, Charsets.UTF_8)
                     }
+
                     record.tnf == NdefRecord.TNF_WELL_KNOWN && record.type.contentEquals(NdefRecord.RTD_TEXT) -> {
                         // 文本记录，需要跳过语言代码
                         val payload = record.payload
                         val languageCodeLength = (payload[0].toInt() and 0x3F)
-                        String(payload, languageCodeLength + 1, payload.size - languageCodeLength - 1, Charsets.UTF_8)
+                        String(
+                            payload,
+                            languageCodeLength + 1,
+                            payload.size - languageCodeLength - 1,
+                            Charsets.UTF_8
+                        )
                     }
+
                     else -> {
                         // 其他类型，直接转换
                         String(record.payload, Charsets.UTF_8)
@@ -95,7 +105,8 @@ class NfcHelper {
 
                 // 创建NDEF记录
                 val qrRecord = NdefRecord.createMime(MIME_TYPE, qrData.toByteArray(Charsets.UTF_8))
-                val dateRecord = NdefRecord.createMime(MIME_TYPE, lastCollectedDate.toByteArray(Charsets.UTF_8))
+                val dateRecord =
+                    NdefRecord.createMime(MIME_TYPE, lastCollectedDate.toByteArray(Charsets.UTF_8))
 
                 val message = NdefMessage(arrayOf(qrRecord, dateRecord))
 
@@ -124,7 +135,10 @@ class NfcHelper {
          */
         fun getTodayDateString(): String {
             val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-            return dateFormat.format(Date())
+            val dateString = dateFormat.format(Date())
+            val md = MessageDigest.getInstance("MD5")
+            val hashBytes = md.digest(dateString.toByteArray(Charsets.UTF_8))
+            return Base64.encodeToString(hashBytes, Base64.NO_WRAP)
         }
 
         /**

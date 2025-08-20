@@ -5,7 +5,6 @@ import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.app.PendingIntent
-import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
@@ -75,34 +74,43 @@ class ValidateActivity : AppCompatActivity() {
 
     // 错误/成功提示部分
     private fun showError(message: String) {
-        displayResult(
-            message,
-            R.color.error_red
-        )
-        showAnimation()
-        vibrateError()
+        runOnUiThread {
+            displayResult(
+                message,
+                R.color.error_red
+            )
+            showAnimation()
+            vibrateError()
+        }
     }
+
     private fun showSuccess(message: String) {
-        displayResult(
-            message,
-            R.color.success_green
-        )
-        showAnimation()
-        vibrateSuccess()
+        runOnUiThread {
+            displayResult(
+                message,
+                R.color.success_green
+            )
+            showAnimation()
+            vibrateSuccess()
+        }
     }
 
     private fun showWarning(message: String) {
-        displayResult(
-            message,
-            R.color.warning_amber
-        )
+        runOnUiThread {
+            displayResult(
+                message,
+                R.color.warning_amber
+            )
+        }
     }
 
     private fun showInfo(message: String) {
-        displayResult(
-            message,
-            R.color.secondary_text
-        )
+        runOnUiThread {
+            displayResult(
+                message,
+                R.color.secondary_text
+            )
+        }
     }
 
     private fun vibrateSuccess() {
@@ -155,11 +163,12 @@ class ValidateActivity : AppCompatActivity() {
 
         // 初始化振动器
         vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val vibratorManager = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            val vibratorManager =
+                getSystemService(VIBRATOR_MANAGER_SERVICE) as VibratorManager
             vibratorManager.defaultVibrator
         } else {
             @Suppress("DEPRECATION")
-            getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+            getSystemService(VIBRATOR_SERVICE) as Vibrator
         }
 
         // 初始化NFC
@@ -230,7 +239,10 @@ class ValidateActivity : AppCompatActivity() {
         // 显示窗口类型，如果是离线模式则添加红色标识
         val windowType = preferenceManager.getWindowType()
         if (isOfflineMode) {
-            val windowTypeText = getString(R.string.window_type_display, windowType) + " " + getString(R.string.offline_mode)
+            val windowTypeText = getString(
+                R.string.window_type_display,
+                windowType
+            ) + " " + getString(R.string.offline_mode)
             binding.textViewWindowType.text = windowTypeText
             binding.textViewWindowType.setTextColor(ContextCompat.getColor(this, R.color.error_red))
         } else {
@@ -300,19 +312,15 @@ class ValidateActivity : AppCompatActivity() {
             isProcessingNfc = true
 
             // 显示"请不要移开卡片"
-            runOnUiThread {
-                showWarning(getString(R.string.nfc_keep_card))
-            }
+            showWarning(getString(R.string.nfc_keep_card))
 
             // 读取NFC数据
             val cardData = NfcHelper.readFromTag(tag)
             if (cardData != null) {
                 handleNfcData(cardData)
             } else {
-                runOnUiThread {
-                    showError(getString(R.string.nfc_read_error))
-                    isProcessingNfc = false
-                }
+                showError(getString(R.string.nfc_read_error))
+                isProcessingNfc = false
             }
         }
     }
@@ -326,9 +334,7 @@ class ValidateActivity : AppCompatActivity() {
         lastScanTime = currentTime
 
         // 显示"正在处理"状态
-        runOnUiThread {
-            showInfo(getString(R.string.scan_in_progress))
-        }
+        showInfo(getString(R.string.scan_in_progress))
 
         // 如果是离线模式，直接进行离线验证
         if (isOfflineMode) {
@@ -351,14 +357,20 @@ class ValidateActivity : AppCompatActivity() {
                 // 有权限，启动相机
                 startCamera()
             }
+
             ActivityCompat.shouldShowRequestPermissionRationale(
                 this,
                 Manifest.permission.CAMERA
             ) -> {
                 // 显示权限说明，然后请求权限
-                Toast.makeText(this, getString(R.string.camera_permission_required), Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    this,
+                    getString(R.string.camera_permission_required),
+                    Toast.LENGTH_LONG
+                ).show()
                 requestPermissionLauncher.launch(Manifest.permission.CAMERA)
             }
+
             else -> {
                 // 直接请求权限
                 requestPermissionLauncher.launch(Manifest.permission.CAMERA)
@@ -379,7 +391,11 @@ class ValidateActivity : AppCompatActivity() {
             try {
                 loginViewModel.login(username, password)
             } catch (e: Exception) {
-                Toast.makeText(this@ValidateActivity, getString(R.string.login_error), Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    this@ValidateActivity,
+                    getString(R.string.login_error),
+                    Toast.LENGTH_LONG
+                ).show()
                 preferenceManager.clearAll()
                 navigateToLoginActivity()
             }
@@ -406,7 +422,7 @@ class ValidateActivity : AppCompatActivity() {
             val preview = Preview.Builder()
                 .build()
                 .also {
-                    it.setSurfaceProvider(binding.viewFinder.surfaceProvider)
+                    it.surfaceProvider = binding.viewFinder.surfaceProvider
                 }
 
             // 图像分析用例
@@ -426,9 +442,10 @@ class ValidateActivity : AppCompatActivity() {
 
                 // 绑定用例到相机
                 cameraProvider.bindToLifecycle(
-                    this, cameraSelector, preview, imageAnalysis)
+                    this, cameraSelector, preview, imageAnalysis
+                )
 
-            } catch(exc: Exception) {
+            } catch (exc: Exception) {
                 showWarning(getString(R.string.camera_error))
             }
 
@@ -440,7 +457,8 @@ class ValidateActivity : AppCompatActivity() {
         override fun analyze(imageProxy: ImageProxy) {
             val mediaImage = imageProxy.image
             if (mediaImage != null) {
-                val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+                val image =
+                    InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
 
                 barcodeScanner.process(image)
                     .addOnSuccessListener { barcodes ->
@@ -478,9 +496,7 @@ class ValidateActivity : AppCompatActivity() {
         lastScanTime = currentTime
 
         // 显示"正在扫描"状态
-        runOnUiThread {
-            showInfo(getString(R.string.scan_in_progress))
-        }
+        showInfo(getString(R.string.scan_in_progress))
 
         // 处理扫码数据，传入当前窗口类型
         lifecycleScope.launch {
@@ -519,13 +535,15 @@ class ValidateActivity : AppCompatActivity() {
                     // 仅更新token
                     preferenceManager.saveToken(result.response.data!!.token)
                 }
+
                 is LoginViewModel.LoginResult.Error -> {
                     if (isOfflineMode) {
                         // 离线模式下不需要处理错误
                         return@observe
                     }
                     // 登录失败，返回登录页面
-                    Toast.makeText(this, getString(R.string.login_expired), Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, getString(R.string.login_expired), Toast.LENGTH_LONG)
+                        .show()
                     preferenceManager.clearAll()
                     navigateToLoginActivity()
                 }
@@ -548,7 +566,12 @@ class ValidateActivity : AppCompatActivity() {
                         if (scanData.has_selected) {
                             showSuccess(getString(R.string.meal_type_display, scanData.meal_type))
                         } else {
-                            showError(getString(R.string.meal_type_display, getString(R.string.scan_error_not_selected)))
+                            showError(
+                                getString(
+                                    R.string.meal_type_display,
+                                    getString(R.string.scan_error_not_selected)
+                                )
+                            )
                         }
                         if (isNfcMode) {
                             isProcessingNfc = false
@@ -573,7 +596,11 @@ class ValidateActivity : AppCompatActivity() {
                                 if (!success) {
                                     // 在线模式没写入问题不大
                                     runOnUiThread {
-                                        Toast.makeText(this, getString(R.string.nfc_write_error), Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(
+                                            this,
+                                            getString(R.string.nfc_write_error),
+                                            Toast.LENGTH_SHORT
+                                        ).show()
                                     }
                                 }
                             } else if (isNfcMode) {
@@ -583,6 +610,7 @@ class ValidateActivity : AppCompatActivity() {
                             // 显示成功信息（绿色）并添加视觉效果
                             showSuccess(getString(R.string.scan_success))
                         }
+
                         ScanViewModel.ScanStatus.ALREADY_COLLECTED -> {
                             // 显示已领过餐错误（红色）
                             showError(getString(R.string.scan_error_collected))
@@ -590,6 +618,7 @@ class ValidateActivity : AppCompatActivity() {
                                 isProcessingNfc = false
                             }
                         }
+
                         ScanViewModel.ScanStatus.WRONG_WINDOW -> {
                             // 显示窗口错误（红色）
                             showError(getString(R.string.scan_error_wrong_window))
@@ -597,6 +626,7 @@ class ValidateActivity : AppCompatActivity() {
                                 isProcessingNfc = false
                             }
                         }
+
                         ScanViewModel.ScanStatus.NOT_SELECTED -> {
                             // 显示未选餐错误（红色）
                             showError(getString(R.string.scan_error_not_selected))
@@ -606,12 +636,13 @@ class ValidateActivity : AppCompatActivity() {
                         }
                     }
                 }
+
                 is ScanViewModel.ScanResult.Error -> {
                     // 网络错误，如果是NFC模式，尝试离线验证
                     if (isNfcMode && currentNfcTag != null && NetworkHelper.isNetworkError(result.message)) {
                         handleNfcOfflineMode(result.message)
                     } else {
-                        // 显示错误信
+                        // 显示错误信息
                         showError(result.message)
                         if (isNfcMode) {
                             isProcessingNfc = false
@@ -648,7 +679,12 @@ class ValidateActivity : AppCompatActivity() {
             binding.textViewStudentName.text = getString(R.string.scan_prompt)
             binding.textViewScanResult.text = getString(R.string.scan_waiting)
         }
-        binding.textViewScanResult.setTextColor(ContextCompat.getColor(this, R.color.secondary_text))
+        binding.textViewScanResult.setTextColor(
+            ContextCompat.getColor(
+                this,
+                R.color.secondary_text
+            )
+        )
 
         // 重置防抖变量
         lastScannedQrData = ""
@@ -661,9 +697,7 @@ class ValidateActivity : AppCompatActivity() {
     }
 
     private fun updateNfcCard(): Boolean {
-        runOnUiThread {
-            showWarning(getString(R.string.nfc_keep_card))
-        }
+        showWarning(getString(R.string.nfc_keep_card))
         var success = false
 
         val tag = currentNfcTag

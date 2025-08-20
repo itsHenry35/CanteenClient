@@ -23,6 +23,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val loginViewModel: LoginViewModel by viewModels()
     private lateinit var preferenceManager: PreferenceManager
+
     // 标记是否是自动登录
     private var isAutoLogin = false
     private var nfcAdapter: NfcAdapter? = null
@@ -32,9 +33,10 @@ class MainActivity : AppCompatActivity() {
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
-        if (!isGranted)  {
+        if (!isGranted) {
             // 权限被拒绝，显示提示
-            Toast.makeText(this, getString(R.string.camera_permission_required), Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(R.string.camera_permission_required), Toast.LENGTH_LONG)
+                .show()
         }
     }
 
@@ -78,7 +80,11 @@ class MainActivity : AppCompatActivity() {
                     loginViewModel.login(username, password)
                 } catch (e: Exception) {
                     showLoading(false)
-                    Toast.makeText(this, getString(R.string.login_error) + ": ${e.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        this,
+                        getString(R.string.login_error) + ": ${e.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             }
         }
@@ -105,23 +111,33 @@ class MainActivity : AppCompatActivity() {
             val isNfcMode = binding.radioNfc.isChecked
 
             if (apiEndpoint.isEmpty()) {
-                Toast.makeText(this, getString(R.string.error_empty_api_endpoint), Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this,
+                    getString(R.string.error_empty_api_endpoint),
+                    Toast.LENGTH_SHORT
+                ).show()
                 return@setOnClickListener
             }
 
             if (username.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, getString(R.string.error_empty_credentials), Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this,
+                    getString(R.string.error_empty_credentials),
+                    Toast.LENGTH_SHORT
+                ).show()
                 return@setOnClickListener
             }
 
             // 如果选择NFC模式，检查NFC状态
             if (isNfcMode) {
                 if (nfcAdapter == null) {
-                    Toast.makeText(this, getString(R.string.nfc_not_supported), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.nfc_not_supported), Toast.LENGTH_SHORT)
+                        .show()
                     return@setOnClickListener
                 }
                 if (!nfcAdapter!!.isEnabled) {
-                    Toast.makeText(this, getString(R.string.nfc_disabled), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.nfc_disabled), Toast.LENGTH_SHORT)
+                        .show()
                     return@setOnClickListener
                 }
             } else {
@@ -143,7 +159,11 @@ class MainActivity : AppCompatActivity() {
                 showLoading(true)
                 loginViewModel.login(username, password)
             } catch (e: Exception) {
-                Toast.makeText(this, getString(R.string.login_error) + ": ${e.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    this,
+                    getString(R.string.login_error) + ": ${e.message}",
+                    Toast.LENGTH_LONG
+                ).show()
             }
         }
     }
@@ -162,14 +182,20 @@ class MainActivity : AppCompatActivity() {
             hasCameraPermission() -> {
                 // 已经有权限，无需处理
             }
+
             ActivityCompat.shouldShowRequestPermissionRationale(
                 this,
                 Manifest.permission.CAMERA
             ) -> {
                 // 显示权限说明，然后请求权限
-                Toast.makeText(this, getString(R.string.camera_permission_required), Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    this,
+                    getString(R.string.camera_permission_required),
+                    Toast.LENGTH_LONG
+                ).show()
                 requestPermissionLauncher.launch(Manifest.permission.CAMERA)
             }
+
             else -> {
                 // 直接请求权限
                 requestPermissionLauncher.launch(Manifest.permission.CAMERA)
@@ -207,14 +233,18 @@ class MainActivity : AppCompatActivity() {
                     // 导航到扫码界面
                     navigateToScanActivity()
                 }
+
                 is LoginViewModel.LoginResult.Error -> {
                     // 如果是自动登录且选择了NFC模式，检查是否为网络错误
                     if (isAutoLogin && preferenceManager.isNfcMode()) {
                         // 检查是否为网络错误（非账号密码错误）且是否不是测试角色
-                        if (NetworkHelper.isNetworkError(result.message) && !preferenceManager.getRole().equals("canteen_test", ignoreCase = true)) {
+                        if (NetworkHelper.isNetworkError(result.message) && !preferenceManager.getRole()
+                                .equals("canteen_test", ignoreCase = true)
+                        ) {
                             // 设置离线模式
                             isOfflineMode = true
-                            Toast.makeText(this, "网络连接失败，切换到离线模式", Toast.LENGTH_LONG).show()
+                            Toast.makeText(this, "网络连接失败，切换到离线模式", Toast.LENGTH_LONG)
+                                .show()
 
                             // 强行继续到扫码界面
                             navigateToScanActivity()
