@@ -42,7 +42,7 @@ android {
 
 dependencies {
     // 核心库
-    implementation("com.google.android.material:material:1.6.1")
+    implementation("com.google.android.material:material:1.13.0")
 
     // ViewModel 和 LiveData
     implementation("androidx.activity:activity-ktx:1.10.1")
