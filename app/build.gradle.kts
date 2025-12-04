@@ -53,7 +53,7 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:5.1.0")
 
     // CameraX
-    implementation("androidx.camera:camera-camera2:1.4.2")
+    implementation("androidx.camera:camera-camera2:1.5.2")
     implementation("androidx.camera:camera-lifecycle:1.4.2")
     implementation("androidx.camera:camera-view:1.4.2")
 
