@@ -45,7 +45,7 @@ dependencies {
     implementation("com.google.android.material:material:1.6.1")
 
     // ViewModel 和 LiveData
-    implementation("androidx.activity:activity-ktx:1.10.1")
+    implementation("androidx.activity:activity-ktx:1.12.2")
 
     // Retrofit 网络请求
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
